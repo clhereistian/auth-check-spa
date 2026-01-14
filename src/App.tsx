@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import './App.css'
 import { useIsAuthenticated, useMsal } from '@azure/msal-react'
 import { loginRequest } from './auth/authConfig'
@@ -6,6 +7,22 @@ function App() {
   const { instance, accounts } = useMsal()
   const isAuthenticated = useIsAuthenticated()
   const activeAccount = instance.getActiveAccount() ?? accounts[0]
+  const attemptedAutoLogin = useRef(false)
+
+  useEffect(() => {
+    if (isAuthenticated || attemptedAutoLogin.current) {
+      return
+    }
+    attemptedAutoLogin.current = true
+    const account = instance.getActiveAccount() ?? accounts[0]
+    if (account) {
+      instance
+        .ssoSilent({ ...loginRequest, account })
+        .catch(() => instance.loginRedirect(loginRequest))
+    } else {
+      instance.loginRedirect(loginRequest)
+    }
+  }, [accounts, instance, isAuthenticated])
 
   return (
     <div className="page">
