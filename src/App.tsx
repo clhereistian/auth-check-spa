@@ -13,14 +13,16 @@ function App() {
     if (isAuthenticated || attemptedAutoLogin.current) {
       return
     }
+    const shouldAutoLogin =
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('autoLogin') === '1'
+    if (!shouldAutoLogin) {
+      return
+    }
     attemptedAutoLogin.current = true
     const account = instance.getActiveAccount() ?? accounts[0]
     if (account) {
-      instance
-        .ssoSilent({ ...loginRequest, account })
-        .catch(() => instance.loginRedirect(loginRequest))
-    } else {
-      instance.loginRedirect(loginRequest)
+      instance.ssoSilent({ ...loginRequest, account }).catch(() => undefined)
     }
   }, [accounts, instance, isAuthenticated])
 
